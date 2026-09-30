@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `Gere os dados completos da música/termo "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''} estritamente no seguinte formato JSON, sem nenhum texto extra ou markdown em volta, apenas o JSON puro:
+    const prompt = `Gere os dados completos da música/termo "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''} preenchendo os campos abaixo:
 
     {
       "titulo": "Nome da Música",
@@ -38,12 +38,14 @@ export default async function handler(req, res) {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        // Força a IA a responder estritamente em JSON
+        responseMimeType: 'application/json',
+      },
     });
 
-    let textoResposta = response.text.trim();
-    textoResposta = textoResposta.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    const jsonFinal = JSON.parse(textoResposta);
+    // Como o responseMimeType garante o formato, fazemos o parse direto
+    const jsonFinal = JSON.parse(response.text.trim());
     return res.status(200).json(jsonFinal);
 
   } catch (erro) {
