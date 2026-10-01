@@ -25,8 +25,8 @@ export default async function handler(req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     
-    // Chamada direta via REST API do Gemini (sem dependências externas)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Chamada direta via REST API do Gemini com o modelo atualizado
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
