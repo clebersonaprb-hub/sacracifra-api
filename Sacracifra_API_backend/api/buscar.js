@@ -1,19 +1,10 @@
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ erro: 'Método não permitido' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
   const { query, musica, artista } = req.body || {};
   const termoPesquisa = query || musica;
@@ -24,7 +15,6 @@ export default async function handler(req, res) {
 
   try {
     const prompt = `Gere os dados completos da música/termo "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''} preenchendo os campos abaixo em formato JSON puro:
-
     {
       "titulo": "Nome da Música",
       "artista": "Nome do Artista",
@@ -33,24 +23,30 @@ export default async function handler(req, res) {
       "conteudo": "Letra completa com as cifras entre colchetes ex: [G] [C] Letra..."
     }`;
 
-    // Usando o modelo gemini-2.5-flash standard
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
+    const apiKey = process.env.GEMINI_API_KEY;
+    
+    // Chamada direta via REST API do Gemini (sem dependências externas)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
     });
 
-    const textoResposta = response.text ? response.text.trim() : '';
-    const jsonFinal = JSON.parse(textoResposta);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Erro desconhecido na API do Gemini');
+    }
+
+    const textoResposta = data.candidates[0].content.parts[0].text;
+    const jsonFinal = JSON.parse(textoResposta.trim());
     return res.status(200).json(jsonFinal);
 
   } catch (erro) {
-    console.error("Erro interno no backend:", erro);
-    return res.status(500).json({ 
-      erro: 'Falha ao gerar música com a IA', 
-      detalhes: erro.message 
-    });
+    console.error("Erro detalhado:", erro);
+    return res.status(500).json({ erro: 'Falha ao gerar música', detalhes: erro.message });
   }
 }
