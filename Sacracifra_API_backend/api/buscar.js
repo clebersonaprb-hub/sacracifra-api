@@ -25,11 +25,11 @@ export default async function handler(req, res) {
 
 
   try {
-                const prompt = `Aja como um cifrista profissional, catalogador e pesquisador oficial de cifras musicais.
-O utilizador está a procurar pela versão oficial, exata e completa de uma única música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
+                    const prompt = `Aja como um cifrista profissional, catalogador e pesquisador oficial de cifras musicais.
+O utilizador está a procurar pela música exacta: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
 
-REGRAS ESTRITAS DE BUSCA E CONSISTÊNCIA (ANTI-MISTURA):
-1. OBRA ÚNICA E COesa: É ESTRITAMENTE PROIBIDO misturar versos, refrões ou partes de músicas diferentes. Toda a estrutura da cifra (Intro, Versos, Refrão e Final) deve pertencer exata e unicamente à mesma e única faixa gravada pelo artista original. Não misture letras de canções homónimas ou parecidas.
+REGRAS ESTRITAS DE PRECISÃO:
+1. CORRESPONDÊNCIA EXATA: Procure exatamente a obra oficial correspondente ao título informado (por exemplo, se o termo for "Como És Lindo", traga rigorosamente a música "Como És Lindo" da banda Vida Reluz, e NUNCA outra música com nome parecido ou letras trocadas).
 2. VARIANTE LINGUÍSTICA (PT-BR): A letra deve estar estritamente na variante do Português do Brasil (PT-BR) oficial e exata da gravação de estúdio original.
 3. FONTES OFICIAIS DE REFERÊNCIA: Baseie a sua busca estritamente nas versões reais publicadas em portais brasileiros (Cifra Club, Cifras, SuperCifras, Letras.mus.br).
 4. FORMATO CLÁSSICO POR LINHAS: 
@@ -44,9 +44,8 @@ REGRAS ESTRITAS DE BUSCA E CONSISTÊNCIA (ANTI-MISTURA):
   "artista": "Nome Correto do Artista",
   "tom": "Tom original da música (ex: G, C, Am)",
   "categoria": "Litúrgica ou Louvor ou Comum",
-  "conteudo": "Letra coesa em PT-BR e cifras exatas formatadas em linhas clássicas, com secções entre colchetes ex: [Refrão]\n D    A\n Letra..."
+  "conteudo": "Letra exacta e coesa em PT-BR e cifras formatadas em linhas clássicas, com secções entre colchetes ex: [Refrão]\n D    A\n Letra..."
 }`;
-
 
 
 
