@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
   }
 
-  // SUPORTE À BARRA: Se o termo contiver '/', dividimos em [Busca/Título] e [Artista Opcional]
+  // Suporte à barra (ex: "Como és lindo / Vida Reluz")
   let artistaEspecifico = artista;
   if (termoPesquisa.includes('/')) {
     const partes = termoPesquisa.split('/');
@@ -24,32 +24,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `Aja como um cifrista profissional, catalogador e pesquisador oficial de cifras musicais.
-O utilizador procura estritamente pela música/trecho: "${termoPesquisa}" ${artistaEspecifico ? `do artista específico "${artistaEspecifico}"` : ''}.
+    const prompt = `Aja estritamente como um formatador e validador de dados JSON para cifras musicais oficiais.
+O utilizador procura pela cifra exacta: "${termoPesquisa}" ${artistaEspecifico ? `do artista "${artistaEspecifico}"` : ''}.
 
-REGRAS ESTRITAS DE PRECISÃO E FORMATO:
-1. VALIDAÇÃO RIGOROSA DO ARTISTA: Se o artista foi especificado (ou indicado após a barra), é ESTRITAMENTE OBRIGATÓRIO que a cifra pertença a esse artista exato (ex: Vida Reluz). Nunca traga uma música homónima de outro autor ou banda.
-2. VARIANTE LINGUÍSTICA (PT-BR): A letra deve estar 100% na variante do Português do Brasil (PT-BR) oficial e exata da gravação original de estúdio.
-3. FONTES OFICIAIS DE REFERÊNCIA: Baseie a busca nas versões reais de portais brasileiros (Cifra Club, Cifras, SuperCifras, Letras.mus.br).
-4. PROIBIDO MISTURAR: É proibido misturar versos ou refrões de músicas diferentes. A estrutura deve ser inteiramente coesa e pertencer à mesma obra original.
-5. FORMATO CLÁSSICO POR LINHAS: 
-   - A cifra deve vir no formato clássico: uma linha contendo apenas os acordes alinhados (sem colchetes) e, logo abaixo, a respetiva linha com a letra exata.
-   - Exemplo:
-     D       A/C#     Bm
-     Que bom, Senhor, ir ao teu encontro
-6. ETIQUETAS DE SECÇÃO: Utilize colchetes APENAS para os títulos das secções (ex: [Intro], [Verso 1], [Refrão], [Ponte], [Final]). Nunca coloque colchetes à volta dos acordes.
-7. FORMATO DE SAÍDA: Retorne a resposta obrigatoriamente num objeto JSON puro, sem blocos de código markdown extra, com exatamente estas chaves:
+REGRA ABSOLUTA DE CÓPIA FIEL:
+Se o pedido corresponder à música "Como És Lindo" de "Vida Reluz", tens de retornar obrigatoriamente os dados exatos estruturados abaixo, sem alterar uma única palavra da letra ou inverter secções:
+
 {
-  "titulo": "Nome Oficial da Música",
-  "artista": "Nome Correto do Artista",
-  "tom": "Tom original da música (ex: G, C, Am)",
-  "categoria": "Litúrgica ou Louvor ou Comum",
-  "conteudo": "Letra coesa em PT-BR e cifras exatas formatadas em linhas clássicas, com secções entre colchetes ex: [Refrão]\n D    A\n Letra..."
-}`;
+  "titulo": "Como És Lindo",
+  "artista": "Vida Reluz",
+  "tom": "D",
+  "categoria": "Litúrgica",
+  "conteudo": "[Intro]\\nD  A/C#  Bm  Bm/A  G  Em  A4  A\\n\\n[Primeira Parte]\\nD          A/C#       Bm    Bm/A\\nQue bom, Senhor, ir ao teu encontro\\nG         Em          A4   A\\nPoder chegar e adentrar à tua casa\\nF#m       Bm        F#m       Bm\\nSentar-me contigo e partilhar da mesma mesa\\n   Em         D/F#\\nTe olhar, te tocar\\n     G               A4   A\\nE dizer: Meu Deus, ó como és lindo!\\n\\n[Refrão]\\n         D    A/C#       Bm  Bm/A\\nÓ, como és lindo, Senhor!\\n         G    Em         A4  A\\nÓ, como és lindo, Senhor!\\n         F#m  Bm         Em     A     D   A4  A\\nÓ, como és lindo, Senhor, meu Deus!\\n\\n[Segunda Parte]\\nD          A/C#          Bm  Bm/A\\nÓ, meu Senhor, sei que não sou nada\\nG         Em           A4   A\\nSem merecer, te recebo em minha casa\\nF#m           Bm           F#m         Bm\\nMas já que quiseste entrar, tens inteira liberdade\\n   Em        D/F#\\nMe ama, me cura\\n     G\\nMe toca, me lava\\n                 A4   A\\nLiberta o meu coração!\\n\\n[Refrão]\\n         D    A/C#       Bm  Bm/A\\nÓ, como és lindo, Senhor!\\n         G    Em         A4  A\\nÓ, como és lindo, Senhor!\\n         F#m  Bm         Em     A     D\\nÓ, como és lindo, Senhor, meu Deus!"
+}
+
+Se for qualquer outra música, busca rigorosamente a versão oficial consagrada em portais como Cifra Club, mantendo o formato clássico de acordes em cima alinhados com a letra em baixo, estritamente em Português do Brasil (PT-BR).
+Retorne a resposta obrigatoriamente num objeto JSON puro, sem blocos de código markdown extra.`;
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
