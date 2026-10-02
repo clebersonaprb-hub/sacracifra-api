@@ -25,25 +25,27 @@ export default async function handler(req, res) {
 
 
   try {
-    const prompt = `Aja como um cifrista profissional e catalogador oficial de cifras musicais.
-O utilizador está a procurar pela música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
+        const prompt = `Aja como um cifrista profissional, catalogador e pesquisador oficial de cifras musicais brasileiras e católicas.
+O utilizador está a procurar pela versão oficial e exata da música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
 
-REGRAS ESTRITAS:
-1. BUSCA EXATA E ANTI-ALUCINAÇÃO: Pesquise e retorne estritamente a versão oficial, popular e COMPLETA desta música. É estritamente proibido inventar, omitir estrofes ou misturar trechos de músicas diferentes. Traga exatamente a letra e os acordes reais do artista original.
-2. FORMATO CLÁSSICO POR LINHAS: 
-   - A cifra deve vir no formato clássico: uma linha contendo apenas os acordes alinhados (sem colchetes) e, logo abaixo, a respetiva linha com a letra da música.
+REGRAS ESTRITAS DE BUSCA E ANTI-ALUCINAÇÃO:
+1. FONTES OFICIAIS DE REFERÊNCIA: Baseie a sua busca estritamente nas versões reais publicadas em portais de cifras amplamente conhecidos e oficiais (como Cifra Club, Cifras, SuperCifras, Letras.mus.br ou sites especializados em música católica como Cifras para Missa / Música Sacra).
+2. PROIBIDO MISTURAR OU INVENTAR: É estritamente proibido inventar estrofes, criar versos da sua própria cabeça ou misturar letras de músicas diferentes. Se houver divergências de versões, escolha unicamente a versão mais popular, gravada e executada pelo artista original.
+3. FORMATO CLÁSSICO POR LINHAS: 
+   - A cifra deve vir no formato clássico: uma linha contendo apenas os acordes alinhados (sem colchetes) e, logo abaixo, a respetiva linha com a letra exata da música.
    - Exemplo:
      D       A/C#     Bm
      Que bom, Senhor, ir ao teu encontro
-3. ETIQUETAS DE SECÇÃO: Utilize colchetes APENAS para os títulos das secções/partes da música (ex: [Intro], [Verso 1], [Refrão], [Ponte], [Final]). Nunca coloque colchetes à volta dos acordes.
-4. FORMATO DE SAÍDA: Retorne a resposta obrigatoriamente num objeto JSON puro, sem blocos de código markdown extra, com exatamente estas chaves:
+4. ETIQUETAS DE SECÇÃO: Utilize colchetes APENAS para os títulos das secções/partes da música (ex: [Intro], [Verso 1], [Refrão], [Ponte], [Final]). Nunca coloque colchetes à volta dos acordes.
+5. FORMATO DE SAÍDA: Retorne a resposta obrigatoriamente num objeto JSON puro, sem blocos de código markdown extra, com exatamente estas chaves:
 {
-  "titulo": "Nome da Música",
-  "artista": "Nome do Artista",
-  "tom": "Tom da música (ex: G, C, Am)",
+  "titulo": "Nome Oficial da Música",
+  "artista": "Nome Correto do Artista",
+  "tom": "Tom original da música (ex: G, C, Am)",
   "categoria": "Litúrgica ou Louvor ou Comum",
-  "conteudo": "Letra e cifras formatadas em linhas clássicas, com secções entre colchetes ex: [Refrão]\n D    A\n Letra..."
+  "conteudo": "Letra e cifras exatas da versão oficial formatadas em linhas clássicas, com secções entre colchetes ex: [Refrão]\n D    A\n Letra..."
 }`;
+
 
 
     const apiKey = process.env.GEMINI_API_KEY;
