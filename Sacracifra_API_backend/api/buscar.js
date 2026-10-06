@@ -14,7 +14,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
   }
 
-   if (termoPesquisa.includes("como és lindo") || termoPesquisa.includes("vida reluz")) {
+   // 1. DICIONÁRIO DE SEGURANÇA PARA MÚSICAS CRÍTICAS (Evita gargalos e erros da IA)
+  if (termoPesquisa.includes("como és lindo") || termoPesquisa.includes("vida reluz")) {
     return res.status(200).json({
       "titulo": "Como És Lindo",
       "artista": "Vida Reluz",
