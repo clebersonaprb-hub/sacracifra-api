@@ -14,16 +14,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
   }
 
-  // 1. DICIONÁRIO DE SEGURANÇA PARA MÚSICAS CRÍTICAS (Evita gargalos e erros da IA)
-  if (termoPesquisa.includes("como és lindo") || termoPesquisa.includes("vida reluz")) {
+   if (termoPesquisa.includes("como és lindo") || termoPesquisa.includes("vida reluz")) {
     return res.status(200).json({
       "titulo": "Como És Lindo",
       "artista": "Vida Reluz",
       "tom": "D",
       "categoria": "Litúrgica",
-      "conteudo": "[Intro]\nD  A/C#  Bm  Bm/A  G  Em  A4  A\n\n[Verso 1]\nD         A/C#       Bm    Bm/A\nQue bom, Senhor, ir ao teu encontro\nG         Em          A4   A\nPoder chegar e adentrar à tua casa\nF#m      Bm        F#m      Bm\nSentar-me contigo e partilhar da mesma mesa\n   Em         D/F#\nTe olhar, te tocar\n    G                  A4   A\nE dizer: Meu Deus, ó como és lindo!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D  A4  A\nÓ, como és lindo, Senhor meu Deus!\n\n[Segunda Parte]\nD          A/C#          Bm  Bm/A\nÓ, meu Senhor, sei que não sou nada\nG          Em           A4   A\nSem merecer, te recebo em minha casa\nF#m          Bm           F#m         Bm\nMas já que quiseste entrar, tens inteira liberdade\n   Em        D/F#\nMe ama, me cura\n    G\nMe toca, me lava\n                  A4   A\nLiberta o meu coração!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D\nÓ, como és lindo, Senhor, meu Deus!"
+      "conteudo": "[Intro]\nD  A/C#  Bm  Bm/A  G  Em  A4  A\n\n[Verso 1]\nD         A/C#       Bm    Bm/A\nQue bom, Senhor, ir ao teu encontro\nG         Em          A4   A\nPoder chegar e adentrar à tua casa\nF#m      Bm        F#m      Bm\nSentar-me contigo e partilhar da mesma mesa\n   Em         D/F#\nTe olhar, te tocar\n    G                  A4   A\nE dizer: Meu Deus, ó como és lindo!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D  A4  A\nÓ, como és lindo, Senhor, meu Deus!\n\n[Verso 2]\nD          A/C#          Bm  Bm/A\nÓ, meu Senhor, sei que não sou nada\nG          Em           A4   A\nSem merecer, te recebo em minha casa\nF#m          Bm           F#m         Bm\nMas já que quiseste entrar, tens inteira liberdade\n   Em        D/F#\nMe ama, me cura\n    G\nMe toca, me lava\n                  A4   A\nLiberta o meu coração!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D\nÓ, como és lindo, Senhor, meu Deus!"
     });
   }
+
 
   // 2. PARA AS DEMAIS MÚSICAS, SEGUE O FLUXO NORMAL DA IA
   try {
