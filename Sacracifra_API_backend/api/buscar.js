@@ -16,7 +16,6 @@ export default async function handler(req, res) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     
-    // Verificação preventiva básica da chave
     if (!apiKey) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não está definida nas variáveis de ambiente da Vercel.' });
     }
@@ -24,7 +23,8 @@ export default async function handler(req, res) {
     const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. Retorne estritamente UMA ÚNICA música correspondente a: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
 Retorne exclusivamente em formato JSON puro (sem markdown), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    // Atualizado para o modelo gemini-3.8-flash conforme diretriz da API do Google
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -34,7 +34,6 @@ Retorne exclusivamente em formato JSON puro (sem markdown), contendo exatamente 
 
     const respostaTextoBruto = await response.text();
     
-    // Se a API falhou, devolvemos o texto exato que o Google respondeu para sabermos o motivo
     if (!response.ok) {
       return res.status(500).json({ 
         erro: 'Rejeitado pela API do Google', 
