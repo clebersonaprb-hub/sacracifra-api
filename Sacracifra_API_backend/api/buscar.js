@@ -6,7 +6,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
-  // Agora aceita tanto 'url' direta quanto 'query' antiga para retrocompatibilidade
   const { url, query, musica, artista } = req.body || {};
   const linkOuBusca = (url || query || musica || "").trim();
 
@@ -22,21 +21,26 @@ export default async function handler(req, res) {
 
     let promptInstrucao = "";
 
-    // Se o usuário passou uma URL (ex: Cifra Club), usamos a ferramenta de busca para ler o link exato
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
       promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
-Extraia de lá a cifra oficial da música sem alterar acordes, letras ou estrofes.
-Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou formatação extra), contendo exatamente as chaves:
-- "titulo": Nome oficial da música extraído da página
-- "artista": Nome do artista ou banda extraído da página
-- "tom": Tom principal da música
-- "categoria": Momento litúrgico sugerido ou estilo
-- "conteudo": A cifra completa da página preservando rigorosamente as seções ([Intro], [Refrão], etc.) e os acordes alinhados acima da letra
+Extraia de lá a cifra oficial da música. 
+
+REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
+1. FORMATO DE LINHAS CURTAS: Quebre os versos e estrofes longas em linhas curtas (máximo de 32 a 38 caracteres por linha de texto). NUNCA deixe frases longas que precisem de quebra automática de tela.
+2. Cada linha curta de letra deve ter obrigatoriamente a sua própria linha de acordes logo acima. O padrão final deve ser sempre intercalado: uma linha de acordes e uma linha de letra curta.
+3. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
+4. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
+
+Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
+- "titulo": Nome oficial da música
+- "artista": Nome do artista ou banda
+- "tom": Tom principal
+- "categoria": Momento litúrgico
+- "conteudo": A cifra formatada rigidamente com linhas curtas e acordes emparelhados
 - "fonte": "${linkOuBusca}"`;
     } else {
-      // Fallback caso ainda mandem texto corrido por engano
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
-Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte".`;
+Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte", aplicando a regra de linhas curtas de texto.`;
     }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
@@ -44,7 +48,7 @@ Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "arti
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptInstrucao }] }],
-        tools: [{ "google_search": {} }] // Permite que a IA acesse o link fornecido na web
+        tools: [{ "google_search": {} }]
       })
     });
 
