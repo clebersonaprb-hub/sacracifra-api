@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -28,8 +29,9 @@ Extraia de lá a cifra oficial da música.
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 1. FORMATO DE LINHAS CURTAS: Quebre os versos e estrofes longas em linhas curtas (máximo de 32 a 38 caracteres por linha de texto). NUNCA deixe frases longas que precisem de quebra automática de tela.
 2. Cada linha curta de letra deve ter obrigatoriamente a sua própria linha de acordes logo acima. O padrão final deve ser sempre intercalado: uma linha de acordes e uma linha de letra curta.
-3. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
-4. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
+3. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
+4. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
+5. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
 
 Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
 - "titulo": Nome oficial da música
@@ -38,8 +40,10 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
 - "categoria": Momento litúrgico
 - "conteudo": A cifra formatada rigidamente com linhas curtas e acordes emparelhados
 - "fonte": "${linkOuBusca}"`;
+
     } else {
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
+Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) para Dm7), mantendo acordes básicos e sétimas comuns.
 Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte", aplicando a regra de linhas curtas de texto.`;
     }
 
