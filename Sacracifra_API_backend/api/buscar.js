@@ -6,36 +6,45 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
-  const { query, musica, artista } = req.body || {};
-  let termoPesquisa = (query || musica || "").trim();
+  // Agora aceita tanto 'url' direta quanto 'query' antiga para retrocompatibilidade
+  const { url, query, musica, artista } = req.body || {};
+  const linkOuBusca = (url || query || musica || "").trim();
 
-  if (!termoPesquisa) {
-    return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
+  if (!linkOuBusca) {
+    return res.status(400).json({ erro: 'Link ou termo de busca é obrigatório' });
   }
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    
     if (!apiKey) {
-      return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não está definida nas variáveis de ambiente da Vercel.' });
+      return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
-    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. 
-O usuário buscou por: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
+    let promptInstrucao = "";
 
-INSTRUÇÃO DE BUSCA:
-- O termo buscado pode conter o nome da música, o nome do artista/banda ou um trecho da letra digitado pelo usuário. Use essas pistas para identificar com precisão cirúrgica a versão correta da música.
-- Se houver múltiplos homônimos (músicas com o mesmo nome, como "Como És Lindo"), priorize a versão litúrgica/católica tradicional correspondente aos termos ou trechos digitados.
-- Retorne estritamente UMA ÚNICA música correspondente.
-- Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".
-- No campo "conteudo", mantenha os acordes alinhados acima da letra ou utilize colchetes nas seções (ex: [Refrão]).`;
+    // Se o usuário passou uma URL (ex: Cifra Club), usamos a ferramenta de busca para ler o link exato
+    if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
+      promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
+Extraia de lá a cifra oficial da música sem alterar acordes, letras ou estrofes.
+Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou formatação extra), contendo exatamente as chaves:
+- "titulo": Nome oficial da música extraído da página
+- "artista": Nome do artista ou banda extraído da página
+- "tom": Tom principal da música
+- "categoria": Momento litúrgico sugerido ou estilo
+- "conteudo": A cifra completa da página preservando rigorosamente as seções ([Intro], [Refrão], etc.) e os acordes alinhados acima da letra
+- "fonte": "${linkOuBusca}"`;
+    } else {
+      // Fallback caso ainda mandem texto corrido por engano
+      promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
+Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte".`;
+    }
 
-    // Usando o modelo gemini-3.8-flash atualizado
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptCompleto }] }]
+        contents: [{ parts: [{ text: promptInstrucao }] }],
+        tools: [{ "google_search": {} }] // Permite que a IA acesse o link fornecido na web
       })
     });
 
