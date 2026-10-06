@@ -43,12 +43,16 @@ Retorne um objeto JSON puro contendo exatamente estas chaves:
       })
     });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Erro na API do Gemini');
+       const data = await response.json();
+    if (!response.ok) {
+      // Retorna o erro exato que o Google está enviando
+      return res.status(500).json({ 
+        erro: 'Erro retornado pela API do Google', 
+        detalhes: data.error || data 
+      });
+    }
 
     let textoResposta = data.candidates[0].content.parts[0].text.trim();
-
-    // Limpeza de segurança caso a IA coloque blocos de marcação markdown indesejados
     textoResposta = textoResposta.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
 
     const jsonFinal = JSON.parse(textoResposta);
@@ -56,8 +60,9 @@ Retorne um objeto JSON puro contendo exatamente estas chaves:
 
   } catch (erro) {
     return res.status(500).json({ 
-      erro: 'Falha ao buscar cifra', 
-      detalhes: erro.message 
+      erro: 'Falha interna no servidor', 
+      detalhes: erro.message,
+      stack: erro.stack
     });
   }
 }
