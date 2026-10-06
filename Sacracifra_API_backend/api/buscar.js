@@ -20,10 +20,17 @@ export default async function handler(req, res) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não está definida nas variáveis de ambiente da Vercel.' });
     }
 
-    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. Retorne estritamente UMA ÚNICA música correspondente a: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
-Retorne exclusivamente em formato JSON puro (sem markdown), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".`;
+    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. 
+O usuário buscou por: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
 
-    // Atualizado para o modelo gemini-3.8-flash conforme diretriz da API do Google
+INSTRUÇÃO DE BUSCA:
+- O termo buscado pode conter o nome da música, o nome do artista/banda ou um trecho da letra digitado pelo usuário. Use essas pistas para identificar com precisão cirúrgica a versão correta da música.
+- Se houver múltiplos homônimos (músicas com o mesmo nome, como "Como És Lindo"), priorize a versão litúrgica/católica tradicional correspondente aos termos ou trechos digitados.
+- Retorne estritamente UMA ÚNICA música correspondente.
+- Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".
+- No campo "conteudo", mantenha os acordes alinhados acima da letra ou utilize colchetes nas seções (ex: [Refrão]).`;
+
+    // Usando o modelo gemini-3.8-flash atualizado
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
