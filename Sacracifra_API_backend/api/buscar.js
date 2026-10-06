@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,39 +7,25 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
   const { query, musica, artista } = req.body || {};
-  let termoPesquisa = (query || musica || "").toLowerCase();
+  let termoPesquisa = (query || musica || "").trim();
 
   if (!termoPesquisa) {
     return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
   }
 
-     // Torna a busca tolerante a acentos e termos parciais
-  const termoNormalizado = termoPesquisa.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  
-  if (termoNormalizado.includes("como es lindo") || termoNormalizado.includes("vida reluz")) {
-    return res.status(200).json({
-      "titulo": "Como És Lindo",
-      "artista": "Vida Reluz",
-      "tom": "D",
-      "categoria": "Litúrgica",
-      "conteudo": "[Intro]\nD  A/C#  Bm  Bm/A  G  Em  A4  A\n\n[Verso 1]\nD         A/C#       Bm    Bm/A\nQue bom, Senhor, ir ao teu encontro\nG         Em          A4   A\nPoder chegar e adentrar à tua casa\nF#m      Bm        F#m      Bm\nSentar-me contigo e partilhar da mesma mesa\n   Em         D/F#\nTe olhar, te tocar\n    G                  A4   A\nE dizer: Meu Deus, ó como és lindo!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D  A4  A\nÓ, como és lindo, Senhor, meu Deus!\n\n[Verso 2]\nD          A/C#          Bm  Bm/A\nÓ, meu Senhor, sei que não sou nada\nG          Em           A4   A\nSem merecer, te recebo em minha casa\nF#m          Bm           F#m         Bm\nMas já que quiseste entrar, tens inteira liberdade\n   Em        D/F#\nMe ama, me cura\n    G\nMe toca, me lava\n                  A4   A\nLiberta o meu coração!\n\n[Refrão]\n        D    A/C#       Bm  Bm/A\nÓ, como és lindo, Senhor!\n        G    Em         A4  A\nÓ, como és lindo, Senhor!\n        F#m  Bm         Em     A     D\nÓ, como és lindo, Senhor, meu Deus!"
-    });
-  }
-
-
-
-  // 2. PARA AS DEMAIS MÚSICAS, SEGUE O FLUXO NORMAL DA IA
   try {
-    // Instrução de sistema fixa: define o comportamento rigoroso da IA
-    const systemInstruction = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. 
+    const systemInstruction = `Você é um músico profissional, cifrista e catalogador de repertório católico/religioso brasileiro.
+Sua tarefa é buscar na sua base de conhecimento a cifra exata solicitada e retorná-la limpa e estruturada.
 
-Regras obrigatórias:
-1. Retorne estritamente UMA ÚNICA música correspondente ao termo solicitado. Nunca misture versos, títulos ou trechos de músicas diferentes.
-2. Formate a saída exclusivamente em JSON puro, contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".
-3. No campo "conteudo", mantenha os acordes alinhados acima da letra ou utilize colchetes nas seções (ex: [Refrão]).`;
+REGRAS DE FORMATAÇÃO (ESTRITO):
+Retorne um objeto JSON puro contendo exatamente estas chaves:
+- "titulo": Nome oficial da música (string)
+- "artista": Cantor, banda ou ministério (string)
+- "tom": Tom principal da música (ex: "D", "G", "A", etc.)
+- "categoria": Momento litúrgico sugerido (ex: "Entrada", "Comunhão", "Louvor", etc.)
+- "conteudo": A cifra completa contendo as seções ([Intro], [Verso 1], [Refrão], etc.), com os acordes perfeitamente alinhados acima das respectivas linhas de letra.`;
 
-    // Prompt dinâmico contendo apenas o que o usuário pediu
-    const userPrompt = `O utilizador procura pela música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}. Busque e estruture apenas esta música exata.`;
+    const userPrompt = `Busque a música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.`;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -51,17 +36,28 @@ Regras obrigatórias:
           parts: [{ text: systemInstruction }]
         },
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
+        generationConfig: { 
+          responseMimeType: "application/json",
+          temperature: 0.1 // Temperatura baixa para ser extremamente fiel e objetiva
+        }
       })
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Erro na API');
+    if (!response.ok) throw new Error(data.error?.message || 'Erro na API do Gemini');
 
-    const jsonFinal = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+    let textoResposta = data.candidates[0].content.parts[0].text.trim();
+
+    // Limpeza de segurança caso a IA coloque blocos de marcação markdown indesejados
+    textoResposta = textoResposta.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
+
+    const jsonFinal = JSON.parse(textoResposta);
     return res.status(200).json(jsonFinal);
 
   } catch (erro) {
-    return res.status(500).json({ erro: 'Falha ao buscar cifra', detalhes: erro.message });
+    return res.status(500).json({ 
+      erro: 'Falha ao buscar cifra', 
+      detalhes: erro.message 
+    });
   }
-} // <-- Chave de fechamento da função principal handler que faltava!
+}
