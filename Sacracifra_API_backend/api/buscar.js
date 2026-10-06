@@ -14,45 +14,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    const systemInstruction = `Você é um músico profissional, cifrista e catalogador de repertório católico/religioso brasileiro.
-Sua tarefa é buscar na sua base de conhecimento a cifra exata solicitada e retorná-la limpa e estruturada.
+    // Unificamos o comando e as regras de formato de forma clara em um prompt único e robusto
+    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil.
+O utilizador procura pela música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
 
-REGRAS DE FORMATAÇÃO (ESTRITO):
-Retorne um objeto JSON puro contendo exatamente estas chaves:
-- "titulo": Nome oficial da música (string)
-- "artista": Cantor, banda ou ministério (string)
-- "tom": Tom principal da música (ex: "D", "G", "A", etc.)
-- "categoria": Momento litúrgico sugerido (ex: "Entrada", "Comunhão", "Louvor", etc.)
-- "conteudo": A cifra completa contendo as seções ([Intro], [Verso 1], [Refrão], etc.), com os acordes perfeitamente alinhados acima das respectivas linhas de letra.`;
-
-    const userPrompt = `Busque a música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.`;
+REGRAS OBRIGATÓRIAS:
+1. Retorne estritamente UMA ÚNICA música correspondente. Nunca misture versos ou trechos de músicas diferentes.
+2. Retorne exclusivamente em formato JSON puro (sem markdown ou blocos de código), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".
+3. No campo "conteudo", mantenha os acordes alinhados acima da letra ou utilize colchetes nas seções (ex: [Refrão]).`;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemInstruction }]
-        },
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        contents: [{ parts: [{ text: promptCompleto }] }],
         generationConfig: { 
           responseMimeType: "application/json",
-          temperature: 0.1 // Temperatura baixa para ser extremamente fiel e objetiva
+          temperature: 0.1
         }
       })
     });
 
-       const data = await response.json();
+    const data = await response.json();
     if (!response.ok) {
-      // Retorna o erro exato que o Google está enviando
-      return res.status(500).json({ 
-        erro: 'Erro retornado pela API do Google', 
-        detalhes: data.error || data 
-      });
+      throw new Error(data.error?.message || JSON.stringify(data));
     }
 
     let textoResposta = data.candidates[0].content.parts[0].text.trim();
+    
+    // Limpeza de segurança caso venha com marcação de markdown
     textoResposta = textoResposta.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
 
     const jsonFinal = JSON.parse(textoResposta);
@@ -60,9 +51,8 @@ Retorne um objeto JSON puro contendo exatamente estas chaves:
 
   } catch (erro) {
     return res.status(500).json({ 
-      erro: 'Falha interna no servidor', 
-      detalhes: erro.message,
-      stack: erro.stack
+      erro: 'Falha ao buscar cifra', 
+      detalhes: erro.message 
     });
   }
 }
