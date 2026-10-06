@@ -14,36 +14,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Unificamos o comando e as regras de formato de forma clara em um prompt único e robusto
-    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil.
-O utilizador procura pela música: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
-
-REGRAS OBRIGATÓRIAS:
-1. Retorne estritamente UMA ÚNICA música correspondente. Nunca misture versos ou trechos de músicas diferentes.
-2. Retorne exclusivamente em formato JSON puro (sem markdown ou blocos de código), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".
-3. No campo "conteudo", mantenha os acordes alinhados acima da letra ou utilize colchetes nas seções (ex: [Refrão]).`;
-
     const apiKey = process.env.GEMINI_API_KEY;
+    
+    // Verificação preventiva básica da chave
+    if (!apiKey) {
+      return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não está definida nas variáveis de ambiente da Vercel.' });
+    }
+
+    const promptCompleto = `Aja como um cifrista profissional e catalogador de cifras musicais para o Brasil. Retorne estritamente UMA ÚNICA música correspondente a: "${termoPesquisa}" ${artista ? `do artista "${artista}"` : ''}.
+Retorne exclusivamente em formato JSON puro (sem markdown), contendo exatamente as chaves: "titulo", "artista", "tom", "categoria" e "conteudo".`;
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptCompleto }] }],
-        generationConfig: { 
-          responseMimeType: "application/json",
-          temperature: 0.1
-        }
+        contents: [{ parts: [{ text: promptCompleto }] }]
       })
     });
 
-    const data = await response.json();
+    const respostaTextoBruto = await response.text();
+    
+    // Se a API falhou, devolvemos o texto exato que o Google respondeu para sabermos o motivo
     if (!response.ok) {
-      throw new Error(data.error?.message || JSON.stringify(data));
+      return res.status(500).json({ 
+        erro: 'Rejeitado pela API do Google', 
+        statusHttp: response.status,
+        respostaGoogle: respostaTextoBruto 
+      });
+    }
+
+    const data = JSON.parse(respostaTextoBruto);
+    
+    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+      return res.status(500).json({ erro: 'Estrutura de resposta inesperada', dados: data });
     }
 
     let textoResposta = data.candidates[0].content.parts[0].text.trim();
-    
-    // Limpeza de segurança caso venha com marcação de markdown
     textoResposta = textoResposta.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
 
     const jsonFinal = JSON.parse(textoResposta);
@@ -51,8 +57,9 @@ REGRAS OBRIGATÓRIAS:
 
   } catch (erro) {
     return res.status(500).json({ 
-      erro: 'Falha ao buscar cifra', 
-      detalhes: erro.message 
+      erro: 'Exceção capturada no catch', 
+      detalhes: erro.message,
+      stack: erro.stack
     });
   }
 }
