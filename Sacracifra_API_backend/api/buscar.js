@@ -20,32 +20,46 @@ export default async function handler(req, res) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
-    let promptInstrucao = "";
+        let promptInstrucao = "";
 
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
       promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
 Extraia de lá a cifra oficial da música. 
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
-1. FORMATO DE LINHAS CURTAS: Quebre os versos e estrofes longas em linhas curtas (máximo de 32 a 38 caracteres por linha de texto). NUNCA deixe frases longas que precisem de quebra automática de tela.
-2. Cada linha curta de letra deve ter obrigatoriamente a sua própria linha de acordes logo acima. O padrão final deve ser sempre intercalado: uma linha de acordes e uma linha de letra curta.
+1. PRESERVAÇÃO DO LAYOUT ORIGINAL: Mantenha exatamente as mesmas quebras de linha e o formato original da cifra tal como aparece no site. NUNCA quebre as frases longas artificialmente; preserve a linha inteira para que o alinhamento dos acordes fique idêntico ao original.
+
+2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, sem alterar o espaçamento horizontal original entre os acordes.
+
 3. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
+
 4. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
+
 5. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
 
+
 Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
+
 - "titulo": Nome oficial da música
+
 - "artista": Nome do artista ou banda
+
 - "tom": Tom principal
+
 - "categoria": Momento litúrgico
-- "conteudo": A cifra formatada rigidamente com linhas curtas e acordes emparelhados
+
+- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site
+
 - "fonte": "${linkOuBusca}"`;
 
     } else {
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
+
 Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) para Dm7), mantendo acordes básicos e sétimas comuns.
-Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte", aplicando a regra de linhas curtas de texto.`;
+
+Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte", preservando rigorosamente o layout e as quebras de linha originais da cifra.`;
     }
+
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
