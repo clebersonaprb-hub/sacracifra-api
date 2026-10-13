@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida no Vercel.' });
+      return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
     let promptInstrucao = "";
@@ -28,7 +28,7 @@ Extraia de lá a cifra oficial da música.
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
-1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
+1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa (ex: "O impossível ele fará porque és precioso aos seus olhos"), ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
 
 2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
@@ -52,7 +52,7 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
     } else {
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
 
-Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) para Dm7), mantendo acordes básicos e sétimas comuns.
+Simplifique acordes excessivamente complexos ou extensions avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) para Dm7), mantendo acordes básicos e sétimas comuns.
 
 REGRAS DE FORMATAÇÃO:
 - Nunca coloque rótulos de seção ou arranjo (como [INTRO], [SOLO], [REFRÃO]) na mesma linha que os acordes. Deixe os rótulos em linhas separadas e as linhas de acordes estritamente limpas apenas com as notas.
@@ -60,7 +60,7 @@ REGRAS DE FORMATAÇÃO:
 Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "youtube", "conteudo" e "fonte", preservando rigorosamente o layout, as quebras de linha originais da cifra e a separação limpa entre textos e acordes.`;
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
