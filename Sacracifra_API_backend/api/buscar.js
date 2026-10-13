@@ -26,12 +26,12 @@ export default async function handler(req, res) {
       promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
 Extraia de lá a cifra oficial da música (título, artista, tom e categoria).
 
-BUSCA DO YOUTUBE:
-Através de pesquisa na web, procure no YouTube pelo título exato e autor desta música e obtenha o link de um vídeo confiável (vídeo-aula, clipe oficial ou áudio original). Preencha o campo "youtube" com esse URL (ex: https://www.youtube.com/watch?v=...). Se não encontrar nenhum, deixe a string vazia "".
+BUSCA OBRIGATÓRIA DO YOUTUBE:
+Faça uma pesquisa na web utilizando o operador exato "site:youtube.com" combinado com o título extraído da música e o nome do artista (ex: site:youtube.com [titulo] [artista]). Obtenha o URL direto do vídeo correspondente (ex: https://www.youtube.com/watch?v=...) e preencha o campo "youtube". Se não encontrar nenhum link, deixe a string vazia "".
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
-1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa (ex: "O impossível ele fará porque és precioso aos seus olhos"), ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
+1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
 
 2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
@@ -48,15 +48,15 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
 - "artista": Nome do artista ou banda
 - "tom": Tom principal
 - "categoria": Momento litúrgico
-- "youtube": Link do YouTube obtido através da busca cruzada de autor e música
+- "youtube": URL direto do YouTube obtido através da busca com site:youtube.com
 - "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site e com os rótulos separados dos acordes
 - "fonte": "${linkOuBusca}"`;
 
     } else {
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
 
-BUSCA DO YOUTUBE:
-Pesquise no YouTube pelo título exato e artista desta música e obtenha o link de um vídeo de referência (vídeo-aula, clipe oficial ou áudio original). Preencha o campo "youtube" com esse URL.
+BUSCA OBRIGATÓRIA DO YOUTUBE:
+Faça uma pesquisa na web utilizando o operador "site:youtube.com" junto com o nome da música e do artista para encontrar e retornar o link direto de um vídeo de referência no campo "youtube".
 
 Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) vira Dm7), mantendo acordes básicos e sétimas comuns.
 
