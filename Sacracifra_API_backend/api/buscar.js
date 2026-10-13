@@ -24,7 +24,10 @@ export default async function handler(req, res) {
 
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
       promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
-Extraia de lá a cifra oficial da música. 
+Extraia de lá a cifra oficial da música (título, artista, tom e categoria).
+
+BUSCA DO YOUTUBE:
+Através de pesquisa na web, procure no YouTube pelo título exato e autor desta música e obtenha o link de um vídeo confiável (vídeo-aula, clipe oficial ou áudio original). Preencha o campo "youtube" com esse URL (ex: https://www.youtube.com/watch?v=...). Se não encontrar nenhum, deixe a string vazia "".
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
@@ -32,7 +35,7 @@ REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
 2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
-3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção ou indicações de arranjo (como [Intro], [Intro:], [Solo], [Refrão], etc.) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, mantendo a linha de acordes puramente limpa com as notas.
+3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção ou indicações de arranjo (como [Intro], [Solo], [Refrão], etc.) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, mantendo a linha de acordes puramente limpa com as notas.
 
 4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
 
@@ -45,12 +48,15 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
 - "artista": Nome do artista ou banda
 - "tom": Tom principal
 - "categoria": Momento litúrgico
-- "youtube": Link do YouTube da música ou vídeo-aula encontrado na página (ou string vazia "" se não houver)
+- "youtube": Link do YouTube obtido através da busca cruzada de autor e música
 - "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site e com os rótulos separados dos acordes
 - "fonte": "${linkOuBusca}"`;
 
     } else {
       promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
+
+BUSCA DO YOUTUBE:
+Pesquise no YouTube pelo título exato e artista desta música e obtenha o link de um vídeo de referência (vídeo-aula, clipe oficial ou áudio original). Preencha o campo "youtube" com esse URL.
 
 Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) vira Dm7), mantendo acordes básicos e sétimas comuns.
 
