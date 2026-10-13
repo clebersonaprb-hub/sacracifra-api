@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+Export default async function handler(req, res) {
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -20,36 +20,33 @@ export default async function handler(req, res) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
-        let promptInstrucao = "";
+    let promptInstrucao = "";
 
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
       promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
 Extraia de lá a cifra oficial da música. 
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
+
 1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa (ex: "O impossível ele fará porque és precioso aos seus olhos"), ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
 
 2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
-3. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
+3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção, partes da música ou indicações de arranjo (como [INTRO], [SOLO], [REFRÃO], INTRO:) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, e a linha de acordes deve conter puramente as notas/cifras (ex: "Am C G"), para permitir a correta transposição de tom no aplicativo.
 
-4. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
+4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
 
-5. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
+5. Preserve estritamente as seções originais ([Primeira Parte], [Refrão], etc.), mas sempre separadas das cifras.
 
+6. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
 
 Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
-
 - "titulo": Nome oficial da música
-
 - "artista": Nome do artista ou banda
-
 - "tom": Tom principal
-
 - "categoria": Momento litúrgico
-
-- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site
-
+- "youtube": Link do YouTube da música, clipe ou vídeo-aula encontrado na página (ou string vazia "" se não encontrar nenhum)
+- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site e com os rótulos separados dos acordes
 - "fonte": "${linkOuBusca}"`;
 
     } else {
@@ -57,9 +54,11 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
 
 Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) para Dm7), mantendo acordes básicos e sétimas comuns.
 
-Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "conteudo" e "fonte", preservando rigorosamente o layout e as quebras de linha originais da cifra.`;
-    }
+REGRAS DE FORMATAÇÃO:
+- Nunca coloque rótulos de seção ou arranjo (como [INTRO], [SOLO], [REFRÃO]) na mesma linha que os acordes. Deixe os rótulos em linhas separadas e as linhas de acordes estritamente limpas apenas com as notas.
 
+Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "youtube", "conteudo" e "fonte", preservando rigorosamente o layout, as quebras de linha originais da cifra e a separação limpa entre textos e acordes.`;
+    }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
