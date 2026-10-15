@@ -23,29 +23,32 @@ export default async function handler(req, res) {
     let promptInstrucao = "";
 
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
-      promptInstrucao = `Com base no link oficial da web: "${linkOuBusca}", identifique o artista e a música a partir da URL e gere a respetiva cifra oficial completa.
+      // Prompt aprimorado para extrair e descodificar com precisão o slug da URL do Cifra Club
+      promptInstrucao = `Analise detalhadamente esta URL oficial do Cifra Club: "${linkOuBusca}".
+Extraia rigorosamente o artista e o nome da música a partir dos segmentos da URL (substituindo os hífens por espaços e capitalizando corretamente). 
+Com base estritamente nesse artista e nessa música exatos, gere a cifra oficial correspondente. NUNCA substitua por outra música.
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
-1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como no padrão original. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
+0. CABEÇALHO OBRIGATÓRIO NO TOPO:
+   - 1ª linha: TÍTULO DA MÚSICA EM LETRAS MAIÚSCULAS
+   - 2ª linha: Autor: [Nome correto do artista]
+   - 3ª linha: (Linha em branco)
+   - Da 4ª linha em diante: A cifra completa.
 
-2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
+1. PROIBIDO QUEBRAR LINHAS LONGAS: Mantenha as linhas de texto contínuas como na cifra original.
+2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, respeitando o espaçamento horizontal original.
+3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção (como [Intro], [Refrão]) na mesma linha que os acordes.
+4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes complexos (ex: F7M(9) vira F7M).
+5. Preserve as seções originais da música.
 
-3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção ou indicações de arranjo (como [Intro], [Solo], [Refrão], etc.) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, mantendo a linha de acordes puramente limpa com as notas.
-
-4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
-
-5. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
-
-6. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
-
-Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
-- "titulo": Nome oficial da música
-- "artista": Nome do artista ou banda
+Retorne exclusivamente em formato JSON puro (sem markdown ou blocos de código), contendo exatamente as chaves:
+- "titulo": Nome oficial correto da música identificado na URL
+- "artista": Nome oficial do artista identificado na URL
 - "tom": Tom principal
-- "categoria": Momento litúrgico
+- "categoria": Momento litúrgico adequado
 - "youtube": ""
-- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas e com os rótulos separados dos acordes
+- "conteudo": A cifra formatada (incluindo o título em maiúsculas e o autor nas 2 primeiras linhas)
 - "fonte": "${linkOuBusca}"`;
 
     } else {
@@ -64,7 +67,6 @@ Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "arti
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptInstrucao }] }]
-        // ATENÇÃO: A chave "tools" (google_search) foi totalmente removida para garantir zero custos e máxima velocidade!
       })
     });
 
