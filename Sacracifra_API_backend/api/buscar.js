@@ -23,17 +23,13 @@ export default async function handler(req, res) {
     let promptInstrucao = "";
 
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
-      promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
-Extraia de lá a cifra oficial da música (título, artista, tom e categoria).
-
-BUSCA OBRIGATÓRIA DO YOUTUBE:
-Faça uma pesquisa na web utilizando o operador exato "site:youtube.com" combinado com o título extraído da música e o nome do artista (ex: site:youtube.com [titulo] [artista]). Obtenha o URL direto do vídeo correspondente (ex: https://www.youtube.com/watch?v=...) e preencha o campo "youtube". Se não encontrar nenhum link, deixe a string vazia "".
+      promptInstrucao = `Com base no link oficial da web: "${linkOuBusca}", identifique o artista e a música a partir da URL e gere a respetiva cifra oficial completa.
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
-1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
+1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como no padrão original. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
 
-2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
+2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
 3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção ou indicações de arranjo (como [Intro], [Solo], [Refrão], etc.) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, mantendo a linha de acordes puramente limpa com as notas.
 
@@ -48,15 +44,12 @@ Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou 
 - "artista": Nome do artista ou banda
 - "tom": Tom principal
 - "categoria": Momento litúrgico
-- "youtube": URL direto do YouTube obtido através da busca com site:youtube.com
-- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site e com os rótulos separados dos acordes
+- "youtube": ""
+- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas e com os rótulos separados dos acordes
 - "fonte": "${linkOuBusca}"`;
 
     } else {
-      promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
-
-BUSCA OBRIGATÓRIA DO YOUTUBE:
-Faça uma pesquisa na web utilizando o operador "site:youtube.com" junto com o nome da música e do artista para encontrar e retornar o link direto de um vídeo de referência no campo "youtube".
+      promptInstrucao = `Aja como um catalogador musical. Encontre a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
 
 Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) vira Dm7), mantendo acordes básicos e sétimas comuns.
 
@@ -70,8 +63,8 @@ Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "arti
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptInstrucao }] }],
-        tools: [{ "google_search": {} }]
+        contents: [{ parts: [{ text: promptInstrucao }] }]
+        // ATENÇÃO: A chave "tools" (google_search) foi totalmente removida para garantir zero custos e máxima velocidade!
       })
     });
 
