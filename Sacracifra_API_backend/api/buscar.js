@@ -20,62 +20,58 @@ export default async function handler(req, res) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
-    let nomeMusicaExtraido = "";
-    let nomeArtistaExtraido = "";
+    let promptInstrucao = "";
 
-    // Se for um link (ex: https://www.cifraclub.com.br/juninho-cassimiro/meu-pai/)
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
-      try {
-        const urlObj = new URL(linkOuBusca);
-        const partes = urlObj.pathname.split('/').filter(p => p.length > 0);
-        
-        if (partes.length >= 2) {
-          // Ex: /juninho-cassimiro/meu-pai/ -> artista: "juninho cassimiro", musica: "meu pai"
-          nomeArtistaExtraido = partes[0].replace(/-/g, ' ');
-          nomeMusicaExtraido = partes[1].replace(/-/g, ' ');
-        } else if (partes.length === 1) {
-          nomeMusicaExtraido = partes[0].replace(/-/g, ' ');
-        }
-      } catch (e) {
-        nomeMusicaExtraido = linkOuBusca;
-      }
-    } else {
-      nomeMusicaExtraido = linkOuBusca;
-      nomeArtistaExtraido = artista || "";
-    }
+      promptInstrucao = `Acesse e leia o conteúdo exato da página web contida neste link: "${linkOuBusca}".
+Extraia de lá a cifra oficial da música (título, artista, tom e categoria).
 
-    const promptInstrucao = `Gere a cifra oficial exata da música "${nomeMusicaExtraido}" ${nomeArtistaExtraido ? `do artista/autor "${nomeArtistaExtraido}"` : ''}.
-
-ATENÇÃO RIGOROSA: A cifra DEVE ser exclusivamente da música "${nomeMusicaExtraido}". NUNCA substitua por outra música.
+BUSCA OBRIGATÓRIA DO YOUTUBE:
+Faça uma pesquisa na web utilizando o operador exato "site:youtube.com" combinado com o título extraído da música e o nome do artista (ex: site:youtube.com [titulo] [artista]). Obtenha o URL direto do vídeo correspondente (ex: https://www.youtube.com/watch?v=...) e preencha o campo "youtube". Se não encontrar nenhum link, deixe a string vazia "".
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
-0. CABEÇALHO OBRIGATÓRIO NO TOPO:
-   - 1ª linha: TÍTULO DA MÚSICA EM LETRAS MAIÚSCULAS
-   - 2ª linha: Autor: [Nome correto do artista/autor]
-   - 3ª linha: (Linha em branco)
-   - Da 4ª linha em diante: A cifra completa.
+1. PROIBIDO QUEBRAR LINHAS LONGAS: Copie exatamente como está no site. Se a frase for longa, ela DEVE OBRIGATORIAMENTE manter-se numa única linha contínua, por mais longa que seja. NUNCA divida uma frase de texto em duas linhas.
 
-1. PROIBIDO QUEBRAR LINHAS LONGAS: Mantenha as linhas de texto contínuas como na cifra original.
-2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, respeitando o espaçamento horizontal original.
-3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção (como [Intro], [Refrão]) na mesma linha que os acordes.
-4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes complexos (ex: F7M(9) vira F7M).
-5. Preserve as seções originais da música.
+2. Cada linha de acordes deve manter-se rigorosamente posicionada logo acima da respetiva linha de letra, exatamente como no site de origem, respeitando o espaçamento horizontal original para que os acordes fiquem alinhados com as palavras corretas.
 
-Retorne exclusivamente em formato JSON puro (sem markdown ou blocos de código), contendo exatamente as chaves:
+3. SEPARAÇÃO DE RÓTULOS E ACORDES: Nunca coloque rótulos de seção ou indicações de arranjo (como [Intro], [Solo], [Refrão], etc.) na mesma linha que os acordes. O rótulo deve ficar isolado em sua própria linha acima, mantendo a linha de acordes puramente limpa com as notas.
+
+4. SIMPLIFICAÇÃO DE ACORDES: Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como nonas ou trezenas, ex: F7M(9) vira F7M, e Dm7(9) vira Dm7). Preserve acordes básicos, com sétima (7, 7M) e menores (m), para manter compatibilidade com os diagramas visuais do aplicativo.
+
+5. Preserve estritamente as seções originais ([Intro], [Primeira Parte], [Refrão], etc.).
+
+6. Remova tablaturas longas e complexas se houver, focando na cifra limpa para acompanhamento.
+
+Retorne exclusivamente em formato JSON puro (sem markdown, blocos de código ou acentos de formatação), contendo exatamente as chaves:
 - "titulo": Nome oficial da música
-- "artista": Nome oficial do artista
+- "artista": Nome do artista ou banda
 - "tom": Tom principal
-- "categoria": Momento litúrgico adequado (ex: Entrada, Comunhão, Louvor, etc.)
-- "youtube": ""
-- "conteudo": A cifra formatada (incluindo o título em maiúsculas e o autor nas 2 primeiras linhas)
+- "categoria": Momento litúrgico
+- "youtube": URL direto do YouTube obtido através da busca com site:youtube.com
+- "conteudo": A cifra formatada mantendo rigorosamente a estrutura original de linhas do site e com os rótulos separados dos acordes
 - "fonte": "${linkOuBusca}"`;
+
+    } else {
+      promptInstrucao = `Aja como um catalogador musical. Encontre na web a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
+
+BUSCA OBRIGATÓRIA DO YOUTUBE:
+Faça uma pesquisa na web utilizando o operador "site:youtube.com" junto com o nome da música e do artista para encontrar e retornar o link direto de um vídeo de referência no campo "youtube".
+
+Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) vira Dm7), mantendo acordes básicos e sétimas comuns.
+
+REGRAS DE FORMATAÇÃO:
+- Nunca coloque rótulos de seção ou arranjo (como [Intro], [Solo], [Refrão]) na mesma linha que os acordes. Deixe-os em linhas separadas.
+
+Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "youtube", "conteudo" e "fonte", preservando rigorosamente o layout e as quebras de linha originais da cifra.`;
+    }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptInstrucao }] }]
+        contents: [{ parts: [{ text: promptInstrucao }] }],
+        tools: [{ "google_search": {} }]
       })
     });
 
