@@ -20,19 +20,39 @@ export default async function handler(req, res) {
       return res.status(500).json({ erro: 'Configuração incorreta', detalhes: 'GEMINI_API_KEY não definida.' });
     }
 
-    let promptInstrucao = "";
+    let nomeMusicaExtraido = "";
+    let nomeArtistaExtraido = "";
 
+    // Se for um link (ex: https://www.cifraclub.com.br/juninho-cassimiro/meu-pai/)
     if (linkOuBusca.startsWith("http://") || linkOuBusca.startsWith("https://")) {
-      // Prompt aprimorado para extrair e descodificar com precisão o slug da URL do Cifra Club
-      promptInstrucao = `Analise detalhadamente esta URL oficial do Cifra Club: "${linkOuBusca}".
-Extraia rigorosamente o artista e o nome da música a partir dos segmentos da URL (substituindo os hífens por espaços e capitalizando corretamente). 
-Com base estritamente nesse artista e nessa música exatos, gere a cifra oficial correspondente. NUNCA substitua por outra música.
+      try {
+        const urlObj = new URL(linkOuBusca);
+        const partes = urlObj.pathname.split('/').filter(p => p.length > 0);
+        
+        if (partes.length >= 2) {
+          // Ex: /juninho-cassimiro/meu-pai/ -> artista: "juninho cassimiro", musica: "meu pai"
+          nomeArtistaExtraido = partes[0].replace(/-/g, ' ');
+          nomeMusicaExtraido = partes[1].replace(/-/g, ' ');
+        } else if (partes.length === 1) {
+          nomeMusicaExtraido = partes[0].replace(/-/g, ' ');
+        }
+      } catch (e) {
+        nomeMusicaExtraido = linkOuBusca;
+      }
+    } else {
+      nomeMusicaExtraido = linkOuBusca;
+      nomeArtistaExtraido = artista || "";
+    }
+
+    const promptInstrucao = `Gere a cifra oficial exata da música "${nomeMusicaExtraido}" ${nomeArtistaExtraido ? `do artista/autor "${nomeArtistaExtraido}"` : ''}.
+
+ATENÇÃO RIGOROSA: A cifra DEVE ser exclusivamente da música "${nomeMusicaExtraido}". NUNCA substitua por outra música.
 
 REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 
 0. CABEÇALHO OBRIGATÓRIO NO TOPO:
    - 1ª linha: TÍTULO DA MÚSICA EM LETRAS MAIÚSCULAS
-   - 2ª linha: Autor: [Nome correto do artista]
+   - 2ª linha: Autor: [Nome correto do artista/autor]
    - 3ª linha: (Linha em branco)
    - Da 4ª linha em diante: A cifra completa.
 
@@ -43,24 +63,13 @@ REGRAS ABSOLUTAS DE FORMATAÇÃO PARA O CAMPO "CONTEUDO":
 5. Preserve as seções originais da música.
 
 Retorne exclusivamente em formato JSON puro (sem markdown ou blocos de código), contendo exatamente as chaves:
-- "titulo": Nome oficial correto da música identificado na URL
-- "artista": Nome oficial do artista identificado na URL
+- "titulo": Nome oficial da música
+- "artista": Nome oficial do artista
 - "tom": Tom principal
-- "categoria": Momento litúrgico adequado
+- "categoria": Momento litúrgico adequado (ex: Entrada, Comunhão, Louvor, etc.)
 - "youtube": ""
 - "conteudo": A cifra formatada (incluindo o título em maiúsculas e o autor nas 2 primeiras linhas)
 - "fonte": "${linkOuBusca}"`;
-
-    } else {
-      promptInstrucao = `Aja como um catalogador musical. Encontre a cifra exata para: "${linkOuBusca}" ${artista ? `do artista "${artista}"` : ''}.
-
-Simplifique acordes excessivamente complexos ou extensões avançadas entre parênteses (como F7M(9) para F7M e Dm7(9) vira Dm7), mantendo acordes básicos e sétimas comuns.
-
-REGRAS DE FORMATAÇÃO:
-- Nunca coloque rótulos de seção ou arranjo (como [Intro], [Solo], [Refrão]) na mesma linha que os acordes. Deixe-os em linhas separadas.
-
-Retorne exclusivamente em formato JSON puro, contendo as chaves: "titulo", "artista", "tom", "categoria", "youtube", "conteudo" e "fonte", preservando rigorosamente o layout e as quebras de linha originais da cifra.`;
-    }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
