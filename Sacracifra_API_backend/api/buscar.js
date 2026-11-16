@@ -279,6 +279,7 @@ export default async function handler(req, res) {
   const guardado = cacheGet(chaveCache);
   if (guardado) return res.status(200).json({ ...guardado, origem: 'cache' });
 
+  let motivoLeitor = '';
   try {
     let resultado;
 
@@ -286,6 +287,7 @@ export default async function handler(req, res) {
       try {
         resultado = { ...(await lerCifraClub(linkOuBusca)), origem: 'leitor' };
       } catch (erroLeitor) {
+        motivoLeitor = erroLeitor.message;
         console.warn('Leitor do CifraClub falhou, usando IA:', erroLeitor.message);
       }
     }
@@ -300,6 +302,8 @@ export default async function handler(req, res) {
     return res.status(erro.http || 500).json({
       erro: erro.titulo || 'Exceção capturada no catch',
       detalhes: erro.message,
+      leitorCifraClub: ehCifraClub(linkOuBusca)
+        ? (motivoLeitor || 'não foi usado') : 'link não é do CifraClub',
       ...(erro.extra || {}),
     });
   }
