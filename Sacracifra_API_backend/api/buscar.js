@@ -1,5 +1,5 @@
 // /api/buscar  —  SacraCifra
-// 1) Link do CifraClub  -> lê o HTML direto (grátis, instantâneo, sem IA)
+// 1) Link do CifraClub / Músicas para Missa -> lê o HTML direto (grátis, sem IA)
 // 2) Outro link / busca  -> Gemini (como antes)
 // 3) Se o leitor falhar  -> Gemini como reserva
 //
@@ -8,6 +8,7 @@
 //   GEMINI_MODEL    (opcional; padrão = o modelo que você já usava)
 
 // ───────── AJUSTES ─────────
+const USAR_IA = false;                  // false = nunca chama o Gemini (custo zero)
 const AUTOR_PREFERE_COMPOSITOR = false; // true: usa o compositor quando a página tiver
 const CATEGORIA_DO_SITE = false;        // true: usa o gênero do site (ex.: "Gospel/Religioso")
 const SIMPLIFICAR_ACORDES = true;       // F7M(9) -> F7M, Dm7(9) -> Dm7 (mesma regra que o prompt da IA)
@@ -139,6 +140,72 @@ function extrairCifraClub(html) {
   };
 }
 
+// ---- leitor do Músicas para Missa
+function textoLimpo(s) {
+  return decodificar(s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+function extrairMusicasParaMissa(html) {
+  const ini = html.search(/<pre[^>]*id=['"]div-cifra['"][^>]*>/i);
+  if (ini < 0) return null;
+  const fim = html.indexOf('</pre>', ini);
+  if (fim < 0) return null;
+
+  let texto = html.slice(ini, fim)
+    .replace(/^<pre[^>]*>/i, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '');
+  texto = limpar(decodificar(texto)).replace(/\r/g, '');
+
+  let linhas = texto.split('\n').map((l) => l.replace(/\s+$/, ''));
+  linhas = separarRotulos(linhas);
+  if (SIMPLIFICAR_ACORDES) linhas = linhas.map(simplificarLinhaDeAcordes);
+  const conteudo = linhas.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+  if (!conteudo) return null;
+
+  const h1 = html.match(/<h1[^>]*id=['"]titulo-musica['"][^>]*>([\s\S]*?)<\/h1>/i) ||
+             html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  const titulo = h1 ? textoLimpo(h1[1]) : '';
+
+  const yt = html.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/i);
+  const youtube = yt ? 'https://www.youtube.com/watch?v=' + yt[1] : '';
+
+  // aba "Informações": "MÚSICA: FREI FABRETI" e o momento litúrgico em negrito
+  let autor = '';
+  let momento = '';
+  const info = html.match(/<div id=['"]info['"][^>]*>([\s\S]*?)<\/div>/i);
+  if (info) {
+    const m = info[1].match(/M[ÚU]SICA:\s*([^<]+)/i);
+    if (m) autor = decodificar(m[1]).trim();
+    const f = info[1].match(/<strong>([\s\S]*?)<\/strong>/i);
+    if (f) momento = textoLimpo(f[1]);
+  }
+
+  return {
+    titulo,
+    artista: autor,
+    tom: '',
+    categoria: momento,
+    youtube,
+    conteudo,
+  };
+}
+
+function ehMusicasParaMissa(link) {
+  try {
+    const u = new URL(link);
+    return /^https?:$/.test(u.protocol) && /(^|\.)musicasparamissa\.com\.br$/i.test(u.hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
+function escolherLeitor(link) {
+  if (ehCifraClub(link)) return extrairCifraClub;
+  if (ehMusicasParaMissa(link)) return extrairMusicasParaMissa;
+  return null;
+}
+
 function ehCifraClub(link) {
   try {
     const u = new URL(link);
@@ -148,16 +215,18 @@ function ehCifraClub(link) {
   }
 }
 
-async function lerCifraClub(link) {
+async function lerPagina(link, extrair) {
   const resp = await fetch(link, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; SacraCifra/1.0)',
+      // identificação honesta, a mesma que o app novo usa
+      'User-Agent': 'Sacracifra/1.0 (importador de cifras a pedido do usuario)',
+      'Accept': 'text/html,application/xhtml+xml',
       'Accept-Language': 'pt-BR,pt;q=0.9',
     },
     redirect: 'follow',
   });
-  if (!resp.ok) throw new Error('CifraClub respondeu ' + resp.status);
-  const r = extrairCifraClub(await resp.text());
+  if (!resp.ok) throw new Error('O site respondeu ' + resp.status);
+  const r = extrair(await resp.text());
   if (!r) throw new Error('Cifra não encontrada na página');
   return { ...r, fonte: link };
 }
@@ -283,16 +352,26 @@ export default async function handler(req, res) {
   try {
     let resultado;
 
-    if (ehCifraClub(linkOuBusca)) {
+    const extrator = escolherLeitor(linkOuBusca);
+    if (extrator) {
       try {
-        resultado = { ...(await lerCifraClub(linkOuBusca)), origem: 'leitor' };
+        resultado = { ...(await lerPagina(linkOuBusca, extrator)), origem: 'leitor' };
       } catch (erroLeitor) {
         motivoLeitor = erroLeitor.message;
-        console.warn('Leitor do CifraClub falhou, usando IA:', erroLeitor.message);
+        console.warn('Leitor falhou:', erroLeitor.message);
       }
     }
 
     if (!resultado) {
+      if (!USAR_IA) {
+        const e = new Error(
+          escolherLeitor(linkOuBusca)
+            ? "O site não permitiu a leitura automática desta página. Copie a cifra e cole em 'Nova cifra'."
+            : 'Este site ainda não é suportado (use CifraClub ou Músicas para Missa).'
+        );
+        e.http = 502; e.titulo = 'Leitor sem IA não conseguiu importar';
+        throw e;
+      }
       resultado = { ...(await viaGemini(linkOuBusca, artista)), origem: 'ia' };
     }
 
@@ -302,8 +381,8 @@ export default async function handler(req, res) {
     return res.status(erro.http || 500).json({
       erro: erro.titulo || 'Exceção capturada no catch',
       detalhes: erro.message,
-      leitorCifraClub: ehCifraClub(linkOuBusca)
-        ? (motivoLeitor || 'não foi usado') : 'link não é do CifraClub',
+      leitor: escolherLeitor(linkOuBusca)
+        ? (motivoLeitor || 'não foi usado') : 'site não suportado',
       ...(erro.extra || {}),
     });
   }
